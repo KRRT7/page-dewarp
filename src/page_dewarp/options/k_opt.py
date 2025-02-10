@@ -20,13 +20,13 @@ def K(cfg: Config) -> np.ndarray:
 
     Returns:
         A 3x3 NumPy array representing the intrinsic camera matrix.
-
     """
-    return np.array(
-        [
-            [cfg.FOCAL_LENGTH, 0, 0],
-            [0, cfg.FOCAL_LENGTH, 0],
-            [0, 0, 1],
-        ],
-        dtype=np.float32,
-    )
+    # Preallocate the 3x3 matrix with zeros for efficiency
+    result = np.zeros((3, 3), dtype=np.float32)
+    
+    # Set the diagonal elements
+    result[0, 0] = cfg.FOCAL_LENGTH
+    result[1, 1] = cfg.FOCAL_LENGTH
+    result[2, 2] = 1.0  # Since this is a constant, it's not necessary to cast to float32 again
+    
+    return result
