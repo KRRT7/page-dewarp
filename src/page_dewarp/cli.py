@@ -18,12 +18,9 @@ __all__ = ["ArgParser"]
 
 def stringify_hint(type_hint) -> str:
     """Convert a type hint to a user-readable string representation."""
-    match type_hint:
-        case type():
-            hint = type_hint.__name__
-        case _:
-            hint = str(type_hint)
-    return hint
+    if isinstance(type_hint, type):
+        return type_hint.__name__
+    return str(type_hint)
 
 
 class ArgParser(argparse.ArgumentParser):
