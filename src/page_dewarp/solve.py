@@ -9,7 +9,7 @@ import numpy as np
 from cv2 import solvePnP
 
 from .options import cfg
-from .options.k_opt import K
+from .options.k_opt import K as K_matrix, K
 
 
 __all__ = ["get_default_params"]
@@ -34,7 +34,8 @@ def get_default_params(
             params: A 1D array combining rotation, translation, cubic slopes, etc.
 
     """
-    page_width, page_height = (np.linalg.norm(corners[i] - corners[0]) for i in (1, -1))
+    page_width = np.linalg.norm(corners[1] - corners[0])
+    page_height = np.linalg.norm(corners[-1] - corners[0])
     cubic_slopes = [0.0, 0.0]  # initial guess for the cubic has no slope
 
     # Object points of a flat page in 3D coordinates
@@ -46,15 +47,19 @@ def get_default_params(
             [0, page_height, 0],
         ],
     )
+
+    # Cache the intrinsic matrix if K doesn't need to change often
+    intrinsic_matrix = K_matrix(cfg=cfg)
+
     # Estimate rotation and translation from four 2D-to-3D point correspondences
-    _, rvec, tvec = solvePnP(corners_object3d, corners, K(cfg=cfg), np.zeros(5))
+    _, rvec, tvec = solvePnP(corners_object3d, corners, intrinsic_matrix, np.zeros(5))
 
     span_counts = [len(xc) for xc in xcoords]
-    params = np.hstack(
+    params = np.concatenate(
         (
-            np.array(rvec).flatten(),
-            np.array(tvec).flatten(),
-            np.array(cubic_slopes).flatten(),
+            rvec.flatten(),
+            tvec.flatten(),
+            cubic_slopes,
             ycoords.flatten(),
         )
         + tuple(xcoords),
